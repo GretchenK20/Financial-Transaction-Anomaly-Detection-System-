@@ -469,5 +469,323 @@
       "explanation": "Transaction 3 has low fraud risk (score: 0.000, 0.0th percentile). Primary driver: v4.",
       "is_fraud": 0
     }
-  }
+  },
+  "hourly_fraud_rate": [
+    {
+      "hour": 0,
+      "count": 7695,
+      "fraud_count": 6,
+      "fraud_rate_pct": 0.078
+    },
+    {
+      "hour": 1,
+      "count": 4220,
+      "fraud_count": 10,
+      "fraud_rate_pct": 0.237
+    },
+    {
+      "hour": 2,
+      "count": 3328,
+      "fraud_count": 57,
+      "fraud_rate_pct": 1.7127
+    },
+    {
+      "hour": 3,
+      "count": 3492,
+      "fraud_count": 17,
+      "fraud_rate_pct": 0.4868
+    },
+    {
+      "hour": 4,
+      "count": 2209,
+      "fraud_count": 23,
+      "fraud_rate_pct": 1.0412
+    },
+    {
+      "hour": 5,
+      "count": 2990,
+      "fraud_count": 11,
+      "fraud_rate_pct": 0.3679
+    },
+    {
+      "hour": 6,
+      "count": 4101,
+      "fraud_count": 9,
+      "fraud_rate_pct": 0.2195
+    },
+    {
+      "hour": 7,
+      "count": 7243,
+      "fraud_count": 23,
+      "fraud_rate_pct": 0.3175
+    },
+    {
+      "hour": 8,
+      "count": 10276,
+      "fraud_count": 9,
+      "fraud_rate_pct": 0.0876
+    },
+    {
+      "hour": 9,
+      "count": 15838,
+      "fraud_count": 16,
+      "fraud_rate_pct": 0.101
+    },
+    {
+      "hour": 10,
+      "count": 16598,
+      "fraud_count": 8,
+      "fraud_rate_pct": 0.0482
+    },
+    {
+      "hour": 11,
+      "count": 16856,
+      "fraud_count": 53,
+      "fraud_rate_pct": 0.3144
+    },
+    {
+      "hour": 12,
+      "count": 15420,
+      "fraud_count": 17,
+      "fraud_rate_pct": 0.1102
+    },
+    {
+      "hour": 13,
+      "count": 15365,
+      "fraud_count": 17,
+      "fraud_rate_pct": 0.1106
+    },
+    {
+      "hour": 14,
+      "count": 16570,
+      "fraud_count": 23,
+      "fraud_rate_pct": 0.1388
+    },
+    {
+      "hour": 15,
+      "count": 16461,
+      "fraud_count": 26,
+      "fraud_rate_pct": 0.1579
+    },
+    {
+      "hour": 16,
+      "count": 16453,
+      "fraud_count": 22,
+      "fraud_rate_pct": 0.1337
+    },
+    {
+      "hour": 17,
+      "count": 16166,
+      "fraud_count": 29,
+      "fraud_rate_pct": 0.1794
+    },
+    {
+      "hour": 18,
+      "count": 17039,
+      "fraud_count": 33,
+      "fraud_rate_pct": 0.1937
+    },
+    {
+      "hour": 19,
+      "count": 15649,
+      "fraud_count": 19,
+      "fraud_rate_pct": 0.1214
+    },
+    {
+      "hour": 20,
+      "count": 16756,
+      "fraud_count": 18,
+      "fraud_rate_pct": 0.1074
+    },
+    {
+      "hour": 21,
+      "count": 17703,
+      "fraud_count": 16,
+      "fraud_rate_pct": 0.0904
+    },
+    {
+      "hour": 22,
+      "count": 15441,
+      "fraud_count": 9,
+      "fraud_rate_pct": 0.0583
+    },
+    {
+      "hour": 23,
+      "count": 10938,
+      "fraud_count": 21,
+      "fraud_rate_pct": 0.192
+    }
+  ],
+  "amount_bucket_fraud_rate": [
+    {
+      "bucket": "zero",
+      "count": 1825,
+      "fraud_count": 27,
+      "fraud_rate_pct": 1.4795
+    },
+    {
+      "bucket": "micro",
+      "count": 95489,
+      "fraud_count": 222,
+      "fraud_rate_pct": 0.2325
+    },
+    {
+      "bucket": "small",
+      "count": 92390,
+      "fraud_count": 56,
+      "fraud_rate_pct": 0.0606
+    },
+    {
+      "bucket": "medium",
+      "count": 65788,
+      "fraud_count": 102,
+      "fraud_rate_pct": 0.155
+    },
+    {
+      "bucket": "large",
+      "count": 26246,
+      "fraud_count": 76,
+      "fraud_rate_pct": 0.2896
+    },
+    {
+      "bucket": "very_large",
+      "count": 3069,
+      "fraud_count": 9,
+      "fraud_rate_pct": 0.2933
+    }
+  ],
+  "feature_importance": [
+    {
+      "feature": "v14",
+      "importance": 0.452248
+    },
+    {
+      "feature": "v10",
+      "importance": 0.061464
+    },
+    {
+      "feature": "v4",
+      "importance": 0.057493
+    },
+    {
+      "feature": "v12",
+      "importance": 0.039852
+    },
+    {
+      "feature": "v8",
+      "importance": 0.031048
+    },
+    {
+      "feature": "v20",
+      "importance": 0.029479
+    },
+    {
+      "feature": "v13",
+      "importance": 0.025903
+    },
+    {
+      "feature": "amount",
+      "importance": 0.022433
+    },
+    {
+      "feature": "v21",
+      "importance": 0.018786
+    },
+    {
+      "feature": "v17",
+      "importance": 0.017906
+    },
+    {
+      "feature": "v7",
+      "importance": 0.017574
+    },
+    {
+      "feature": "v28",
+      "importance": 0.015447
+    },
+    {
+      "feature": "v19",
+      "importance": 0.01541
+    },
+    {
+      "feature": "v18",
+      "importance": 0.015277
+    },
+    {
+      "feature": "v6",
+      "importance": 0.014285
+    },
+    {
+      "feature": "hour_of_day",
+      "importance": 0.01381
+    },
+    {
+      "feature": "v22",
+      "importance": 0.013503
+    },
+    {
+      "feature": "v11",
+      "importance": 0.013248
+    },
+    {
+      "feature": "v25",
+      "importance": 0.013242
+    },
+    {
+      "feature": "v3",
+      "importance": 0.013188
+    },
+    {
+      "feature": "v26",
+      "importance": 0.013137
+    },
+    {
+      "feature": "v15",
+      "importance": 0.012343
+    },
+    {
+      "feature": "v1",
+      "importance": 0.011944
+    },
+    {
+      "feature": "v16",
+      "importance": 0.010976
+    },
+    {
+      "feature": "v27",
+      "importance": 0.010219
+    },
+    {
+      "feature": "v23",
+      "importance": 0.00986
+    },
+    {
+      "feature": "v2",
+      "importance": 0.009233
+    },
+    {
+      "feature": "v5",
+      "importance": 0.0088
+    },
+    {
+      "feature": "v24",
+      "importance": 0.006604
+    },
+    {
+      "feature": "v9",
+      "importance": 0.005289
+    },
+    {
+      "feature": "log_amount",
+      "importance": 0.0
+    },
+    {
+      "feature": "is_night_transaction",
+      "importance": 0.0
+    },
+    {
+      "feature": "amount_zscore",
+      "importance": 0.0
+    }
+  ]
 }

@@ -118,7 +118,9 @@ with st.sidebar:
         )
 
 # ── Tabs ─────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4 = st.tabs(["Transaction Scoring", "Batch Analysis", "Fraud Statistics", "About"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    ["Transaction Scoring", "Batch Analysis", "Fraud Statistics", "Model Insights", "About"]
+)
 
 # ── Tab 1: Transaction Scoring ───────────────────────────────────────────────
 with tab1:
@@ -403,8 +405,83 @@ with tab3:
     else:
         st.warning("No local data and no demo_data.json found — run model training first.")
 
-# ── Tab 4: About ─────────────────────────────────────────────────────────────
+# ── Tab 4: Model Insights ────────────────────────────────────────────────────
 with tab4:
+    st.header("Model Insights")
+    st.caption("Dataset-wide patterns and global model behavior — precomputed from the full 284,807-transaction dataset")
+
+    hourly = DEMO.get("hourly_fraud_rate")
+    buckets = DEMO.get("amount_bucket_fraud_rate")
+    importances = DEMO.get("feature_importance")
+
+    if not (hourly and buckets and importances):
+        st.warning("No precomputed insights found in demo_data.json.")
+    else:
+        st.subheader("When does fraud happen?")
+        col_l, col_r = st.columns(2)
+
+        with col_l:
+            hourly_df = pd.DataFrame(hourly)
+            fig = px.bar(
+                hourly_df, x="hour", y="fraud_rate_pct",
+                title="Fraud Rate by Hour of Day",
+                labels={"hour": "Hour of day (0-23)", "fraud_rate_pct": "Fraud rate (%)"},
+                color_discrete_sequence=["#E63946"],
+                hover_data={"count": True, "fraud_count": True},
+            )
+            fig.add_vrect(
+                x0=-0.5, x1=5.5, fillcolor="#264653", opacity=0.12, line_width=0,
+                annotation_text="night (is_night_transaction)", annotation_position="top left",
+            )
+            fig.update_xaxes(dtick=1)
+            st.plotly_chart(fig, use_container_width=True)
+            st.caption(
+                f"Peak hour: **{max(hourly, key=lambda r: r['fraud_rate_pct'])['hour']}:00** "
+                f"at {max(r['fraud_rate_pct'] for r in hourly):.2f}% fraud rate"
+            )
+
+        with col_r:
+            bucket_df = pd.DataFrame(buckets)
+            bucket_order = ["zero", "micro", "small", "medium", "large", "very_large"]
+            fig2 = px.bar(
+                bucket_df, x="bucket", y="fraud_rate_pct",
+                title="Fraud Rate by Amount Bucket",
+                labels={"bucket": "Amount bucket", "fraud_rate_pct": "Fraud rate (%)"},
+                color_discrete_sequence=["#E63946"],
+                category_orders={"bucket": bucket_order},
+                hover_data={"count": True, "fraud_count": True},
+            )
+            st.plotly_chart(fig2, use_container_width=True)
+            top_bucket = max(buckets, key=lambda r: r["fraud_rate_pct"])
+            st.caption(
+                f"Highest-risk bucket: **{top_bucket['bucket']}** "
+                f"at {top_bucket['fraud_rate_pct']:.2f}% fraud rate "
+                f"({top_bucket['fraud_count']}/{top_bucket['count']} transactions)"
+            )
+
+        st.divider()
+
+        st.subheader("What drives the model overall?")
+        st.caption("XGBoost global feature importance (not per-transaction SHAP — this is the trained model's overall weighting across all features)")
+
+        top_n = st.slider("Show top N features", min_value=5, max_value=len(importances), value=15)
+        imp_df = pd.DataFrame(importances[:top_n])
+        fig3 = px.bar(
+            imp_df.sort_values("importance"),
+            x="importance", y="feature", orientation="h",
+            title=f"Top {top_n} Features by XGBoost Importance",
+            labels={"importance": "Importance", "feature": "Feature"},
+            color_discrete_sequence=["#2A9D8F"],
+        )
+        fig3.update_layout(height=max(300, top_n * 28))
+        st.plotly_chart(fig3, use_container_width=True)
+        st.caption(
+            f"**{importances[0]['feature']}** alone accounts for "
+            f"{importances[0]['importance'] * 100:.1f}% of total model importance."
+        )
+
+# ── Tab 5: About ─────────────────────────────────────────────────────────────
+with tab5:
     st.header("About This System")
     st.markdown("""
     ## Financial Transaction Anomaly Detection System
