@@ -1,0 +1,23 @@
+name: clinical_risk_scoring
+version: '1.0.0'
+config-version: 2
+
+profile: clinical_risk_scoring
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  clinical_risk_scoring:
+    bronze:
+      +materialized: view
+      +schema: bronze
+    silver:
+      +materialized: table
+      +schema: silver
+    gold:
+      +materialized: table
+      +schema: gold

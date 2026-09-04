@@ -1,0 +1,7 @@
+clinical_risk_scoring:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', '../data/clinical_risk.duckdb') }}"
+      threads: 4

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clinical-risk-api
+  labels:
+    app: clinical-risk-api
+    version: "1.0.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: clinical-risk-api
+  template:
+    metadata:
+      labels:
+        app: clinical-risk-api
+    spec:
+      containers:
+        - name: clinical-risk-api
+          image: clinical-risk-api:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MLFLOW_TRACKING_URI
+              value: "sqlite:///mlruns.db"
+            - name: DUCKDB_PATH
+              value: "data/clinical_risk.duckdb"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - name: data-volume
+              mountPath: /app/data
+            - name: models-volume
+              mountPath: /app/models
+      volumes:
+        - name: data-volume
+          hostPath:
+            path: /data
+            type: DirectoryOrCreate
+        - name: models-volume
+          hostPath:
+            path: /models
+            type: DirectoryOrCreate

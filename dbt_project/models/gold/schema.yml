@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: fct_patient_risk_features
+    description: >
+      Gold feature mart — one row per patient with all ML features.
+      Joins demographics, condition flags, vitals, and utilization patterns.
+    columns:
+      - name: patient_id
+        tests:
+          - unique
+          - not_null
+      - name: composite_risk_score
+        description: Rule-based risk score for validation baseline

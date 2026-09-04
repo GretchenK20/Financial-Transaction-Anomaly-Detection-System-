@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: stg_patients
+    description: Raw patient demographics from FHIR R4 bundles
+    columns:
+      - name: patient_id
+        description: Unique patient identifier
+        tests:
+          - unique
+          - not_null
+      - name: gender
+        tests:
+          - accepted_values:
+              values: ['male', 'female', 'other', 'unknown']
+
+  - name: stg_conditions
+    columns:
+      - name: condition_id
+        tests:
+          - unique
+          - not_null
+      - name: patient_id
+        tests:
+          - not_null
