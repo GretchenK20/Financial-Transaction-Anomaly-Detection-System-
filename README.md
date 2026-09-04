@@ -1,4 +1,19 @@
+---
+title: Financial Fraud Detection API
+emoji: 💳
+colorFrom: blue
+colorTo: red
+sdk: docker
+dockerfile: docker/Dockerfile
+app_port: 8000
+pinned: false
+---
+
 # Financial Transaction Anomaly Detection System
+
+> The YAML block above configures this repo as a [Hugging Face Space](https://huggingface.co/spaces)
+> (Docker SDK) serving `api/main.py`. It's inert everywhere else (GitHub, local
+> checkouts) — safe to ignore if you're not deploying there.
 
 Production fraud-detection AI pipeline: real credit card transaction data → dbt medallion → PyTorch autoencoder / XGBoost champion-challenger → FastAPI + Docker + Kubernetes → LangChain agent → Streamlit dashboard.
 

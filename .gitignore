@@ -6,6 +6,10 @@ __pycache__/
 data/raw/transactions/creditcard.csv
 data/financial_anomaly.duckdb
 *.duckdb
+# Trimmed demo DB (all 492 real frauds + a sampled legit subset, ~2MB) is
+# small enough to commit — it's what the deployed API serves /transaction/{id}
+# from, since the full 242MB database above is intentionally not committed.
+!data/demo_financial_anomaly.duckdb
 dbt_project/target/
 dbt_project/dbt_packages/
 dbt_project/logs/
