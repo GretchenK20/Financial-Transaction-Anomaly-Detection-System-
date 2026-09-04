@@ -1,25 +1,23 @@
 version: 2
 
 models:
-  - name: stg_patients
-    description: Raw patient demographics from FHIR R4 bundles
+  - name: stg_transactions
+    description: Raw credit card transactions (Time, V1-V28 PCA features, Amount, Class)
     columns:
-      - name: patient_id
-        description: Unique patient identifier
+      - name: transaction_id
+        description: Sequential row identifier assigned at ingestion
         tests:
           - unique
           - not_null
-      - name: gender
+      - name: time
         tests:
+          - not_null
+      - name: amount
+        tests:
+          - not_null
+      - name: class
+        description: 1 = fraudulent transaction, 0 = legitimate
+        tests:
+          - not_null
           - accepted_values:
-              values: ['male', 'female', 'other', 'unknown']
-
-  - name: stg_conditions
-    columns:
-      - name: condition_id
-        tests:
-          - unique
-          - not_null
-      - name: patient_id
-        tests:
-          - not_null
+              values: [0, 1]

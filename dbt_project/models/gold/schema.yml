@@ -1,14 +1,21 @@
 version: 2
 
 models:
-  - name: fct_patient_risk_features
+  - name: fct_fraud_features
     description: >
-      Gold feature mart — one row per patient with all ML features.
-      Joins demographics, condition flags, vitals, and utilization patterns.
+      Gold feature mart — one row per transaction with all ML features
+      (V1-V28, amount/time derived features) plus the fraud label.
     columns:
-      - name: patient_id
+      - name: transaction_id
         tests:
           - unique
           - not_null
-      - name: composite_risk_score
-        description: Rule-based risk score for validation baseline
+      - name: amount
+        tests:
+          - not_null
+      - name: class
+        description: 1 = fraudulent transaction, 0 = legitimate
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]

@@ -40,6 +40,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
 
 ENV MLFLOW_TRACKING_URI=sqlite:///mlruns.db
-ENV DUCKDB_PATH=data/clinical_risk.duckdb
+ENV DUCKDB_PATH=data/financial_anomaly.duckdb
 
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

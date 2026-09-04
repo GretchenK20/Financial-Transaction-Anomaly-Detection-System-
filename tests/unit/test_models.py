@@ -6,19 +6,19 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from models.autoencoder.train_autoencoder import ClinicalAutoencoder
+from models.autoencoder.train_autoencoder import FraudAutoencoder
 from models.champion_challenger import detect_drift
 
 
 def test_autoencoder_forward_shape():
-    model = ClinicalAutoencoder(input_dim=20, latent_dim=8)
+    model = FraudAutoencoder(input_dim=20, latent_dim=8)
     x = torch.randn(16, 20)
     out = model(x)
     assert out.shape == (16, 20)
 
 
 def test_autoencoder_reconstruction_error_shape():
-    model = ClinicalAutoencoder(input_dim=20, latent_dim=8)
+    model = FraudAutoencoder(input_dim=20, latent_dim=8)
     model.eval()
     x = torch.randn(32, 20)
     errors = model.reconstruction_error(x)
@@ -27,7 +27,7 @@ def test_autoencoder_reconstruction_error_shape():
 
 
 def test_autoencoder_encode_shape():
-    model = ClinicalAutoencoder(input_dim=20, latent_dim=8)
+    model = FraudAutoencoder(input_dim=20, latent_dim=8)
     x = torch.randn(16, 20)
     z = model.encode(x)
     assert z.shape == (16, 8)
@@ -35,7 +35,7 @@ def test_autoencoder_encode_shape():
 
 def test_reconstruction_error_higher_for_noise():
     """Anomalous inputs should have higher reconstruction error than normal inputs."""
-    model = ClinicalAutoencoder(input_dim=20, latent_dim=8)
+    model = FraudAutoencoder(input_dim=20, latent_dim=8)
     model.eval()
 
     normal = torch.zeros(50, 20)

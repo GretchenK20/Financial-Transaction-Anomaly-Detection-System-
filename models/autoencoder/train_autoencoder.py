@@ -23,15 +23,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import DUCKDB_PATH, MLFLOW_TRACKING_URI, MLFLOW_EXPERIMENT_NAME
 
 NUMERIC_FEATURES = [
-    "age_years", "gender_male", "is_deceased",
-    "has_diabetes", "has_hypertension", "has_cad", "has_heart_failure",
-    "has_asthma_or_copd", "has_ckd", "has_depression", "has_anxiety",
-    "has_cancer", "total_active_conditions",
-    "bmi", "systolic_bp", "diastolic_bp", "cholesterol_total",
-    "is_obese", "elevated_systolic", "high_cholesterol",
-    "total_encounters", "emergency_count", "inpatient_count",
-    "encounters_last_12m", "care_span_days", "high_ed_utilizer",
-    "composite_risk_score",
+    *[f"v{i}" for i in range(1, 29)],
+    "amount", "log_amount", "hour_of_day", "is_night_transaction", "amount_zscore",
 ]
 
 MODEL_DIR = Path(__file__).parent
@@ -39,7 +32,7 @@ SCALER_PATH = MODEL_DIR / "scaler.joblib"
 MODEL_PATH = MODEL_DIR / "autoencoder.pt"
 
 
-class ClinicalAutoencoder(nn.Module):
+class FraudAutoencoder(nn.Module):
     def __init__(self, input_dim: int, latent_dim: int = 8):
         super().__init__()
         self.encoder = nn.Sequential(
@@ -75,10 +68,10 @@ class ClinicalAutoencoder(nn.Module):
 def load_features(db_path: Path) -> pd.DataFrame:
     with duckdb.connect(str(db_path), read_only=True) as conn:
         df = conn.execute(
-            f"SELECT patient_id, {', '.join(NUMERIC_FEATURES)} "
-            f"FROM main_gold.fct_patient_risk_features"
+            f"SELECT transaction_id, class, {', '.join(NUMERIC_FEATURES)} "
+            f"FROM main_gold.fct_fraud_features"
         ).fetchdf()
-    logger.info(f"Loaded {len(df):,} patients from gold layer")
+    logger.info(f"Loaded {len(df):,} transactions from gold layer")
     return df
 
 
@@ -98,7 +91,7 @@ def preprocess(df: pd.DataFrame) -> tuple[np.ndarray, StandardScaler, list[str]]
 def train(
     db_path: Path = DUCKDB_PATH,
     epochs: int = 100,
-    batch_size: int = 32,
+    batch_size: int = 256,
     lr: float = 1e-3,
     latent_dim: int = 8,
     anomaly_percentile: float = 95.0,
@@ -107,7 +100,8 @@ def train(
     mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
 
     df = load_features(db_path)
-    patient_ids = df["patient_id"].values
+    transaction_ids = df["transaction_id"].values
+    fraud_labels = df["class"].values
     X, scaler, feature_cols = preprocess(df)
 
     X_train, X_val = train_test_split(X, test_size=0.2, random_state=42)
@@ -120,7 +114,7 @@ def train(
         TensorDataset(X_train_t), batch_size=batch_size, shuffle=True
     )
 
-    model = ClinicalAutoencoder(input_dim=len(feature_cols), latent_dim=latent_dim)
+    model = FraudAutoencoder(input_dim=len(feature_cols), latent_dim=latent_dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, patience=10, factor=0.5
@@ -135,7 +129,7 @@ def train(
             "epochs": epochs,
             "batch_size": batch_size,
             "lr": lr,
-            "n_patients": len(df),
+            "n_transactions": len(df),
         })
 
         best_val_loss = float("inf")
@@ -177,7 +171,7 @@ def train(
         model.load_state_dict(torch.load(MODEL_PATH))
         model.eval()
 
-        # Score all patients
+        # Score all transactions
         errors = model.reconstruction_error(X_all_t).numpy()
         threshold = np.percentile(errors, anomaly_percentile)
         anomaly_flags = (errors >= threshold).astype(int)
@@ -195,11 +189,12 @@ def train(
         mlflow.pytorch.log_model(model, "autoencoder_model", input_example=sample_input.numpy())
 
         scores_df = pd.DataFrame({
-            "patient_id": patient_ids,
+            "transaction_id": transaction_ids,
             "reconstruction_error": errors,
             "anomaly_score": errors,
             "is_anomaly": anomaly_flags,
             "anomaly_threshold": threshold,
+            "is_fraud": fraud_labels,
         })
         scores_path = MODEL_DIR / "anomaly_scores.parquet"
         scores_df.to_parquet(scores_path, index=False)

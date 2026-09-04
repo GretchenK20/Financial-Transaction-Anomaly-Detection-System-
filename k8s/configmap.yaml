@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: clinical-risk-config
+  name: financial-fraud-config
 data:
   MLFLOW_TRACKING_URI: "sqlite:///mlruns.db"
-  DUCKDB_PATH: "data/clinical_risk.duckdb"
+  DUCKDB_PATH: "data/financial_anomaly.duckdb"
   API_HOST: "0.0.0.0"
   API_PORT: "8000"

@@ -1,16 +1,16 @@
 {
-  "champion": "autoencoder",
+  "champion": "xgboost",
   "history": [
     {
-      "timestamp": "2026-09-04T17:07:06.939574",
-      "champion": "autoencoder",
+      "timestamp": "2026-09-04T19:51:18.102524",
+      "champion": "xgboost",
       "metrics": {
         "autoencoder": {
-          "f1": 1.0,
-          "auc": 1.0
+          "f1": 0.0495,
+          "auc": 0.926
         },
         "xgboost": {
-          "f1": 1.0,
+          "f1": 0.8346,
           "auc": 1.0
         }
       }

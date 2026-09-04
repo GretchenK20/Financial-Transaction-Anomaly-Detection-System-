@@ -1,6 +1,6 @@
 """
 FastAPI scoring endpoint — serves champion model with SHAP explainability.
-Routes: POST /score, GET /health, GET /champion, POST /batch_score, GET /patient/{id}
+Routes: POST /score, GET /health, GET /champion, POST /batch_score, GET /transaction/{id}
 """
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import DUCKDB_PATH
 from models.autoencoder.train_autoencoder import (
-    ClinicalAutoencoder, NUMERIC_FEATURES,
+    FraudAutoencoder, NUMERIC_FEATURES,
     MODEL_PATH as AE_MODEL_PATH,
     SCALER_PATH as AE_SCALER_PATH,
     MODEL_DIR as AE_DIR,
@@ -37,7 +37,7 @@ def _load_models():
     if AE_MODEL_PATH.exists() and AE_SCALER_PATH.exists():
         _ae_scaler = joblib.load(AE_SCALER_PATH)
         input_dim = _ae_scaler.n_features_in_
-        _ae_model = ClinicalAutoencoder(input_dim=input_dim)
+        _ae_model = FraudAutoencoder(input_dim=input_dim)
         _ae_model.load_state_dict(
             torch.load(AE_MODEL_PATH, map_location="cpu", weights_only=True)
         )
@@ -55,49 +55,55 @@ async def lifespan(app):
 
 
 app = FastAPI(
-    title="Clinical Risk Scoring API",
+    title="Financial Transaction Anomaly Detection API",
     description=(
-        "FHIR-ingested patient risk scoring with PyTorch autoencoder "
-        "and XGBoost champion/challenger"
+        "284K real-world credit card transactions — PyTorch autoencoder + "
+        "XGBoost champion/challenger with SHAP explainability"
     ),
     version="1.0.0",
     lifespan=lifespan,
 )
 
 
-class PatientFeatures(BaseModel):
-    patient_id: str
-    age_years: Optional[float] = None
-    gender_male: Optional[float] = None
-    is_deceased: Optional[float] = 0
-    has_diabetes: Optional[float] = 0
-    has_hypertension: Optional[float] = 0
-    has_cad: Optional[float] = 0
-    has_heart_failure: Optional[float] = 0
-    has_asthma_or_copd: Optional[float] = 0
-    has_ckd: Optional[float] = 0
-    has_depression: Optional[float] = 0
-    has_anxiety: Optional[float] = 0
-    has_cancer: Optional[float] = 0
-    total_active_conditions: Optional[float] = 0
-    bmi: Optional[float] = None
-    systolic_bp: Optional[float] = None
-    diastolic_bp: Optional[float] = None
-    cholesterol_total: Optional[float] = None
-    is_obese: Optional[float] = 0
-    elevated_systolic: Optional[float] = 0
-    high_cholesterol: Optional[float] = 0
-    total_encounters: Optional[float] = 0
-    emergency_count: Optional[float] = 0
-    inpatient_count: Optional[float] = 0
-    encounters_last_12m: Optional[float] = 0
-    care_span_days: Optional[float] = 0
-    high_ed_utilizer: Optional[float] = 0
-    composite_risk_score: Optional[float] = 0
+class TransactionFeatures(BaseModel):
+    transaction_id: int
+    v1: Optional[float] = 0
+    v2: Optional[float] = 0
+    v3: Optional[float] = 0
+    v4: Optional[float] = 0
+    v5: Optional[float] = 0
+    v6: Optional[float] = 0
+    v7: Optional[float] = 0
+    v8: Optional[float] = 0
+    v9: Optional[float] = 0
+    v10: Optional[float] = 0
+    v11: Optional[float] = 0
+    v12: Optional[float] = 0
+    v13: Optional[float] = 0
+    v14: Optional[float] = 0
+    v15: Optional[float] = 0
+    v16: Optional[float] = 0
+    v17: Optional[float] = 0
+    v18: Optional[float] = 0
+    v19: Optional[float] = 0
+    v20: Optional[float] = 0
+    v21: Optional[float] = 0
+    v22: Optional[float] = 0
+    v23: Optional[float] = 0
+    v24: Optional[float] = 0
+    v25: Optional[float] = 0
+    v26: Optional[float] = 0
+    v27: Optional[float] = 0
+    v28: Optional[float] = 0
+    amount: Optional[float] = None
+    log_amount: Optional[float] = None
+    hour_of_day: Optional[float] = 0
+    is_night_transaction: Optional[float] = 0
+    amount_zscore: Optional[float] = 0
 
 
-class RiskScore(BaseModel):
-    patient_id: str
+class FraudScore(BaseModel):
+    transaction_id: int
     champion_model: Optional[str]
     risk_score: float
     is_high_risk: bool
@@ -109,18 +115,18 @@ class RiskScore(BaseModel):
 
 
 class BatchRequest(BaseModel):
-    patients: list[PatientFeatures]
+    transactions: list[TransactionFeatures]
 
 
-def _patient_to_array(patient: PatientFeatures, feature_names: list[str]) -> np.ndarray:
+def _transaction_to_array(txn: TransactionFeatures, feature_names: list[str]) -> np.ndarray:
     vals = [
-        getattr(patient, f, None) or 0.0
+        getattr(txn, f, None) or 0.0
         for f in feature_names
     ]
     return np.array(vals, dtype=float).reshape(1, -1)
 
 
-def _score_patient(patient: PatientFeatures) -> dict:
+def _score_transaction(txn: TransactionFeatures) -> dict:
     registry = load_registry()
     champion = registry.get("champion", "xgboost")
 
@@ -134,7 +140,7 @@ def _score_patient(patient: PatientFeatures) -> dict:
     # columns it actually knows about rather than the full feature list.
     if _ae_model is not None and _ae_scaler is not None:
         ae_feature_names = list(getattr(_ae_scaler, "feature_names_in_", NUMERIC_FEATURES))
-        raw_ae = _patient_to_array(patient, ae_feature_names)
+        raw_ae = _transaction_to_array(txn, ae_feature_names)
         X_ae = _ae_scaler.transform(raw_ae)
         X_t = torch.FloatTensor(X_ae)
         ae_error = float(_ae_model.reconstruction_error(X_t).item())
@@ -144,7 +150,7 @@ def _score_patient(patient: PatientFeatures) -> dict:
         model = _xgb_bundle["model"]
         scaler = _xgb_bundle["scaler"]
         xgb_feature_names = list(getattr(scaler, "feature_names_in_", NUMERIC_FEATURES))
-        raw_xgb = _patient_to_array(patient, xgb_feature_names)
+        raw_xgb = _transaction_to_array(txn, xgb_feature_names)
         X_xgb = scaler.transform(raw_xgb)
         xgb_prob = float(model.predict_proba(X_xgb)[0, 1])
 
@@ -196,16 +202,16 @@ def _score_patient(patient: PatientFeatures) -> dict:
     risk_level = "high" if is_high_risk else "low"
     top_feature = (
         top_factors[0]["feature"].replace("_", " ") if top_factors
-        else "overall health profile"
+        else "overall transaction profile"
     )
     explanation = (
-        f"Patient {patient.patient_id} has {risk_level} clinical risk "
+        f"Transaction {txn.transaction_id} has {risk_level} fraud risk "
         f"(score: {risk_score:.3f}, {risk_percentile}th percentile). "
         f"Primary driver: {top_feature}."
     )
 
     return {
-        "patient_id": patient.patient_id,
+        "transaction_id": txn.transaction_id,
         "champion_model": champion,
         "risk_score": round(risk_score, 4),
         "is_high_risk": is_high_risk,
@@ -233,39 +239,39 @@ def get_champion():
     return load_registry()
 
 
-@app.post("/score", response_model=RiskScore)
-def score(patient: PatientFeatures):
-    return _score_patient(patient)
+@app.post("/score", response_model=FraudScore)
+def score(transaction: TransactionFeatures):
+    return _score_transaction(transaction)
 
 
 @app.post("/batch_score")
 def batch_score(request: BatchRequest):
     results, errors = [], []
-    for patient in request.patients:
+    for transaction in request.transactions:
         try:
-            results.append(_score_patient(patient))
+            results.append(_score_transaction(transaction))
         except Exception as e:
-            errors.append({"patient_id": patient.patient_id, "error": str(e)})
+            errors.append({"transaction_id": transaction.transaction_id, "error": str(e)})
     return {"results": results, "errors": errors, "n_scored": len(results)}
 
 
-@app.get("/patient/{patient_id}")
-def score_from_db(patient_id: str):
+@app.get("/transaction/{transaction_id}")
+def score_from_db(transaction_id: int):
     try:
         import duckdb
         with duckdb.connect(str(DUCKDB_PATH), read_only=True) as conn:
             row = conn.execute(
-                "SELECT * FROM main_gold.fct_patient_risk_features WHERE patient_id = ?",
-                [patient_id],
+                "SELECT * FROM main_gold.fct_fraud_features WHERE transaction_id = ?",
+                [transaction_id],
             ).fetchdf()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
     if row.empty:
-        raise HTTPException(status_code=404, detail=f"Patient {patient_id} not found")
+        raise HTTPException(status_code=404, detail=f"Transaction {transaction_id} not found")
 
     r = row.iloc[0].to_dict()
-    patient = PatientFeatures(patient_id=patient_id, **{
-        k: r.get(k) for k in PatientFeatures.model_fields if k != "patient_id"
+    transaction = TransactionFeatures(transaction_id=transaction_id, **{
+        k: r.get(k) for k in TransactionFeatures.model_fields if k != "transaction_id"
     })
-    return _score_patient(patient)
+    return _score_transaction(transaction)

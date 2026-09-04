@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  clinical-risk-api:
+  financial-fraud-api:
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -9,7 +9,7 @@ services:
       - "8000:8000"
     environment:
       - MLFLOW_TRACKING_URI=sqlite:///mlruns.db
-      - DUCKDB_PATH=data/clinical_risk.duckdb
+      - DUCKDB_PATH=data/financial_anomaly.duckdb
     volumes:
       - ../data:/app/data
       - ../models:/app/models

@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: clinical-risk-api
+  name: financial-fraud-api
   labels:
-    app: clinical-risk-api
+    app: financial-fraud-api
     version: "1.0.0"
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: clinical-risk-api
+      app: financial-fraud-api
   template:
     metadata:
       labels:
-        app: clinical-risk-api
+        app: financial-fraud-api
     spec:
       containers:
-        - name: clinical-risk-api
-          image: clinical-risk-api:latest
+        - name: financial-fraud-api
+          image: financial-fraud-api:latest
           imagePullPolicy: Never
           ports:
             - containerPort: 8000
@@ -25,7 +25,7 @@ spec:
             - name: MLFLOW_TRACKING_URI
               value: "sqlite:///mlruns.db"
             - name: DUCKDB_PATH
-              value: "data/clinical_risk.duckdb"
+              value: "data/financial_anomaly.duckdb"
           resources:
             requests:
               memory: "512Mi"

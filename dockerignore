@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+*.tar.gz
+synthea_fhir/
+synthea.zip
+data/raw/fhir/
+mlruns/
+mlruns.db
+*.egg-info/
+.pytest_cache/
+notebooks/
+minikube-darwin-arm64

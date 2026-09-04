@@ -1,12 +1,12 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: clinical-risk-api-hpa
+  name: financial-fraud-api-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: clinical-risk-api
+    name: financial-fraud-api
   minReplicas: 2
   maxReplicas: 10
   metrics:

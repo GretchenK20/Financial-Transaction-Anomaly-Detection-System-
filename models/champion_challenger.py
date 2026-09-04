@@ -17,7 +17,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import DUCKDB_PATH, MLFLOW_TRACKING_URI, MLFLOW_EXPERIMENT_NAME
 from models.autoencoder.train_autoencoder import (
-    ClinicalAutoencoder, load_features, preprocess,
+    FraudAutoencoder, load_features, preprocess,
     MODEL_PATH as AE_MODEL_PATH, SCALER_PATH as AE_SCALER_PATH,
     MODEL_DIR as AE_DIR, NUMERIC_FEATURES,
 )
@@ -40,10 +40,10 @@ def save_registry(registry: dict) -> None:
 
 def score_autoencoder(db_path: Path) -> pd.DataFrame:
     df = load_features(db_path)
-    patient_ids = df["patient_id"].values
+    transaction_ids = df["transaction_id"].values
     X, scaler, feature_cols = preprocess(df)
 
-    model = ClinicalAutoencoder(input_dim=len(feature_cols))
+    model = FraudAutoencoder(input_dim=len(feature_cols))
     model.load_state_dict(torch.load(AE_MODEL_PATH, map_location="cpu"))
     model.eval()
 
@@ -52,7 +52,7 @@ def score_autoencoder(db_path: Path) -> pd.DataFrame:
     threshold = np.percentile(errors, 95)
 
     return pd.DataFrame({
-        "patient_id": patient_ids,
+        "transaction_id": transaction_ids,
         "ae_score": errors,
         "ae_anomaly": (errors >= threshold).astype(int),
         "ae_threshold": threshold,
@@ -61,7 +61,7 @@ def score_autoencoder(db_path: Path) -> pd.DataFrame:
 
 def score_xgboost(db_path: Path) -> pd.DataFrame:
     df = load_features(db_path)
-    patient_ids = df["patient_id"].values
+    transaction_ids = df["transaction_id"].values
 
     bundle = joblib.load(XGB_MODEL_PATH)
     model = bundle["model"]
@@ -74,7 +74,7 @@ def score_xgboost(db_path: Path) -> pd.DataFrame:
     preds = model.predict(X)
 
     return pd.DataFrame({
-        "patient_id": patient_ids,
+        "transaction_id": transaction_ids,
         "xgb_score": probs,
         "xgb_anomaly": preds,
     })
@@ -97,12 +97,12 @@ def compare_and_promote(db_path: Path = DUCKDB_PATH) -> dict:
     ae_scores = score_autoencoder(db_path)
     xgb_scores = score_xgboost(db_path)
 
-    merged = ae_scores.merge(xgb_scores, on="patient_id")
-    labels = load_labels(scores_path)[["patient_id", "is_anomaly"]]
-    merged = merged.merge(labels, on="patient_id")
+    merged = ae_scores.merge(xgb_scores, on="transaction_id")
+    labels = load_labels(scores_path)[["transaction_id", "is_fraud"]]
+    merged = merged.merge(labels, on="transaction_id")
 
     from sklearn.metrics import f1_score, roc_auc_score
-    y_true = merged["is_anomaly"].values
+    y_true = merged["is_fraud"].values
 
     ae_f1 = f1_score(y_true, merged["ae_anomaly"], zero_division=0)
     xgb_f1 = f1_score(y_true, merged["xgb_anomaly"], zero_division=0)

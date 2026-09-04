@@ -4,9 +4,6 @@ pandas>=2.0.0
 numpy>=1.24.0
 pyarrow>=4.0.0,<16
 
-# FHIR parsing
-fhir.resources>=7.0.0
-
 # dbt
 dbt-duckdb>=1.8.0
 
@@ -22,6 +19,10 @@ great-expectations>=0.18.0
 fastapi>=0.110.0
 uvicorn>=0.29.0
 pydantic>=2.7.0
+
+# Dashboard
+streamlit>=1.32.0
+plotly>=5.20.0
 
 # Agents
 langchain>=0.2.0

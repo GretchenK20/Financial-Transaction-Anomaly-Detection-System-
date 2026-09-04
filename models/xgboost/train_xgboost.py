@@ -1,12 +1,14 @@
 """
-XGBoost classifier for supervised anomaly/risk scoring.
-Uses autoencoder anomaly flags as labels in champion/challenger framework.
+XGBoost classifier for supervised fraud classification.
+Trained on the real Class labels; compared against the autoencoder in the
+champion/challenger framework.
 """
 import duckdb
 import numpy as np
 import pandas as pd
 import xgboost as xgb
-from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.model_selection import StratifiedKFold
+from sklearn.base import clone
 from sklearn.metrics import (
     roc_auc_score, f1_score, precision_score,
     recall_score, average_precision_score,
@@ -46,19 +48,21 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, y_prob: np.ndarray) 
     }
 
 
-def compute_bias_metrics(
+def compute_segment_metrics(
     df: pd.DataFrame,
     y_true: np.ndarray,
     y_prob: np.ndarray,
     group_col: str,
 ) -> dict:
     """
-    Compute AUC per demographic group for fairness evaluation.
-    Flags groups where AUC deviates >0.1 from overall.
+    Compute AUC per transaction segment (e.g. amount tier) for consistency
+    evaluation. Flags segments where AUC deviates >0.1 from overall — this
+    dataset has no demographic attributes, so segments stand in for the
+    fairness-style check some models run across demographic groups.
     """
     overall_auc = roc_auc_score(y_true, y_prob)
     results = {"overall_auc": overall_auc, "groups": {}}
-    fairness_flags = []
+    consistency_flags = []
 
     for group in df[group_col].dropna().unique():
         mask = df[group_col] == group
@@ -73,9 +77,9 @@ def compute_bias_metrics(
             "flagged": gap > 0.1,
         }
         if gap > 0.1:
-            fairness_flags.append(group)
+            consistency_flags.append(group)
 
-    results["fairness_flags"] = fairness_flags
+    results["consistency_flags"] = consistency_flags
     return results
 
 
@@ -98,12 +102,18 @@ def train(
 
     df = load_features(db_path)
     labels = load_labels(scores_path)
-    df = df.merge(labels[["patient_id", "is_anomaly"]], on="patient_id", how="inner")
+    df = df.merge(labels[["transaction_id", "is_fraud"]], on="transaction_id", how="inner")
+
+    # Amount tier, for segment-consistency evaluation below (not a model input)
+    with duckdb.connect(str(db_path), read_only=True) as conn:
+        segments = conn.execute(
+            "SELECT transaction_id, amount_bucket FROM main_gold.fct_fraud_features"
+        ).fetchdf()
+    df = df.merge(segments, on="transaction_id", how="left")
 
     X_raw = df[NUMERIC_FEATURES].fillna(df[NUMERIC_FEATURES].median())
-    y = df["is_anomaly"].values
+    y = df["is_fraud"].values
 
-    # Keep raw df for bias analysis (with demographics)
     demo_df = df.reset_index(drop=True)
 
     scaler = StandardScaler()
@@ -128,11 +138,21 @@ def train(
             "n_estimators": n_estimators,
             "max_depth": max_depth,
             "learning_rate": learning_rate,
-            "n_patients": len(df),
-            "anomaly_rate": float(y.mean()),
+            "n_transactions": len(df),
+            "fraud_rate": float(y.mean()),
         })
 
-        cv_aucs = cross_val_score(model, X, y, cv=cv, scoring="roc_auc")
+        # Manual CV loop — sklearn's "roc_auc" scorer mishandles XGBClassifier's
+        # predict_proba shape with this xgboost/scikit-learn combination
+        # (returns the full (n, 2) proba array instead of the positive-class
+        # column), so cross_val_score(..., scoring="roc_auc") silently yields NaN.
+        cv_aucs = []
+        for train_idx, val_idx in cv.split(X, y):
+            fold_model = clone(model)
+            fold_model.fit(X[train_idx], y[train_idx])
+            fold_prob = fold_model.predict_proba(X[val_idx])[:, 1]
+            cv_aucs.append(roc_auc_score(y[val_idx], fold_prob))
+        cv_aucs = np.array(cv_aucs)
         logger.info(
             f"CV AUC: {cv_aucs.mean():.4f} ± {cv_aucs.std():.4f}"
         )
@@ -153,11 +173,17 @@ def train(
 
         # Save model before SHAP (so file exists even if SHAP fails)
         joblib.dump({"model": model, "scaler": scaler}, XGB_MODEL_PATH)
-        mlflow.xgboost.log_model(
-            model,
-            name="xgboost_model",
-            input_example=X[:1],
-        )
+        try:
+            mlflow.xgboost.log_model(
+                model,
+                name="xgboost_model",
+                input_example=X[:1],
+            )
+        except Exception as e:
+            # Known incompatibility between this xgboost/mlflow version pair
+            # (_estimator_type lookup) — non-fatal, the model is already
+            # persisted via joblib above and metrics/params are still tracked.
+            logger.warning(f"mlflow.xgboost.log_model failed, continuing: {e}")
 
         # SHAP explainability
         explainer = shap.TreeExplainer(model)
@@ -167,31 +193,30 @@ def train(
             shap_values,
             columns=NUMERIC_FEATURES[:X.shape[1]],
         )
-        shap_df["patient_id"] = df["patient_id"].values
+        shap_df["transaction_id"] = df["transaction_id"].values
         shap_df.to_parquet(SHAP_VALUES_PATH, index=False)
         mlflow.log_artifact(str(SHAP_VALUES_PATH))
 
-        # Bias / fairness evaluation
-        bias_results = {}
-        for group_col in ["race", "gender"]:
-            if group_col in demo_df.columns:
-                bias = compute_bias_metrics(demo_df, y, y_prob, group_col)
-                bias_results[group_col] = bias
-                if bias["fairness_flags"]:
-                    logger.warning(
-                        f"Fairness flags for {group_col}: {bias['fairness_flags']}"
-                    )
-                for group, stats in bias["groups"].items():
-                    mlflow.log_metric(
-                        f"auc_{group_col}_{group.replace(' ', '_')[:20]}",
-                        stats["auc"],
-                    )
+        # Segment-consistency evaluation (amount tier)
+        segment_results = {}
+        if "amount_bucket" in demo_df.columns:
+            seg = compute_segment_metrics(demo_df, y, y_prob, "amount_bucket")
+            segment_results["amount_bucket"] = seg
+            if seg["consistency_flags"]:
+                logger.warning(
+                    f"Consistency flags for amount_bucket: {seg['consistency_flags']}"
+                )
+            for group, stats in seg["groups"].items():
+                mlflow.log_metric(
+                    f"auc_amount_bucket_{group.replace(' ', '_')[:20]}",
+                    stats["auc"],
+                )
 
         logger.info("XGBoost training complete")
         return {
             "metrics": metrics,
             "cv_auc_mean": float(cv_aucs.mean()),
-            "bias_results": bias_results,
+            "segment_results": segment_results,
             "feature_importance": dict(
                 zip(
                     NUMERIC_FEATURES[:X.shape[1]],

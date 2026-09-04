@@ -1,7 +1,7 @@
-clinical_risk_scoring:
+financial_fraud_detection:
   target: dev
   outputs:
     dev:
       type: duckdb
-      path: "{{ env_var('DUCKDB_PATH', '../data/clinical_risk.duckdb') }}"
+      path: "{{ env_var('DUCKDB_PATH', '../data/financial_anomaly.duckdb') }}"
       threads: 4

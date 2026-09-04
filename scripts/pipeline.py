@@ -1,6 +1,6 @@
 """
 Main pipeline runner — executes ingestion → dbt → model training in sequence.
-Run: python scripts/pipeline.py --fhir-dir data/raw/fhir
+Run: python scripts/pipeline.py
 """
 import subprocess
 import sys
@@ -8,10 +8,10 @@ from pathlib import Path
 import typer
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from ingestion.bronze_loader import load_bundles
-from config import FHIR_RAW_DIR, DUCKDB_PATH
+from ingestion.transaction_loader import load_transactions, validate_load
+from config import TRANSACTIONS_RAW_DIR, DUCKDB_PATH
 
-app = typer.App()
+app = typer.Typer()
 
 
 def run_dbt(duckdb_path: Path) -> None:
@@ -36,16 +36,17 @@ def run_dbt(duckdb_path: Path) -> None:
 
 @app.command()
 def main(
-    fhir_dir: Path = typer.Argument(FHIR_RAW_DIR, help="Path to FHIR JSON files"),
+    csv_path: Path = typer.Argument(TRANSACTIONS_RAW_DIR / "creditcard.csv", help="Path to creditcard.csv"),
     db_path: Path = typer.Option(DUCKDB_PATH),
-    limit: int = typer.Option(None, help="Limit bundles (for dev)"),
     skip_dbt: bool = typer.Option(False),
     skip_training: bool = typer.Option(False),
 ):
     typer.echo("── Step 1: Bronze ingestion ──")
-    counts = load_bundles(fhir_dir=fhir_dir, db_path=db_path, limit=limit)
-    for table, count in counts.items():
-        typer.echo(f"  {table}: {count:,} rows")
+    count = load_transactions(csv_path=csv_path, db_path=db_path)
+    typer.echo(f"  bronze_transactions: {count:,} rows")
+    result = validate_load(db_path=db_path)
+    if not (result["row_count_ok"] and result["columns_ok"]):
+        raise RuntimeError(f"Ingestion validation failed: {result}")
 
     if not skip_dbt:
         typer.echo("── Step 2: dbt transform ──")
@@ -53,7 +54,9 @@ def main(
 
     if not skip_training:
         typer.echo("── Step 3: Model training ──")
-        typer.echo("  Run: python models/train.py")
+        typer.echo("  Run: python -m models.autoencoder.train_autoencoder")
+        typer.echo("  Run: python -m models.xgboost.train_xgboost")
+        typer.echo("  Run: python -m models.champion_challenger")
 
 
 if __name__ == "__main__":

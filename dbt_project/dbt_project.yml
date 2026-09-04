@@ -1,8 +1,8 @@
-name: clinical_risk_scoring
+name: financial_fraud_detection
 version: '1.0.0'
 config-version: 2
 
-profile: clinical_risk_scoring
+profile: financial_fraud_detection
 
 model-paths: ["models"]
 test-paths: ["tests"]
@@ -11,7 +11,7 @@ target-path: "target"
 clean-targets: ["target", "dbt_packages"]
 
 models:
-  clinical_risk_scoring:
+  financial_fraud_detection:
     bronze:
       +materialized: view
       +schema: bronze

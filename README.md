@@ -1,6 +1,8 @@
-# Clinical Risk Scoring System
+# Financial Transaction Anomaly Detection System
 
-Production clinical AI pipeline: FHIR R4 ingestion → dbt medallion → PyTorch/XGBoost champion-challenger → FastAPI + Docker + Kubernetes → LangChain agent.
+Production fraud-detection AI pipeline: real credit card transaction data → dbt medallion → PyTorch autoencoder / XGBoost champion-challenger → FastAPI + Docker + Kubernetes → LangChain agent → Streamlit dashboard.
+
+Built on the ULB Machine Learning Group's **Credit Card Fraud Detection** dataset (Kaggle: `mlg-ulb/creditcardfraud`) — 284,807 real European card transactions from September 2013, with a 0.17% fraud rate (492 confirmed frauds).
 
 ## Setup
 
@@ -13,20 +15,35 @@ cp .env.example .env
 
 ## Data
 
-Download Synthea FHIR R4 sample data and unzip into `data/raw/fhir/`:
-```
-https://synthetichealth.github.io/synthea-sample-data/downloads/synthea_sample_data_fhir_r4_sep2019.zip
+Download the dataset (requires a Kaggle account/API token) and place it at `data/raw/transactions/creditcard.csv`:
+
+```python
+import kagglehub
+path = kagglehub.dataset_download("mlg-ulb/creditcardfraud")
 ```
 
 ## Run the pipeline
 
 ```bash
-# Ingest + transform (limit=50 for dev)
-python scripts/pipeline.py data/raw/fhir --limit 50
+# 1. Ingest
+python -m ingestion.transaction_loader
 
-# Or step by step:
-python -m ingestion.bronze_loader data/raw/fhir --limit 50
+# 2. Transform
 cd dbt_project && dbt run --profiles-dir . && dbt test --profiles-dir .
+
+# 3. Train models
+python -m models.autoencoder.train_autoencoder
+python -m models.xgboost.train_xgboost
+python -m models.champion_challenger
+
+# 4. Serve
+uvicorn api.main:app --reload
+
+# 5. Dashboard
+streamlit run streamlit_app.py
+
+# 6. Agent (build the fraud-case retrieval index)
+python agents/fraud_agent.py --build-index
 ```
 
 ## Run tests
@@ -38,28 +55,39 @@ pytest tests/ -v
 
 ```
 crs/
-├── ingestion/          # FHIR parser + bronze DuckDB loader
+├── ingestion/          # Transaction CSV loader → DuckDB bronze
 ├── dbt_project/        # Bronze/silver/gold dbt models + tests
 │   └── models/
-│       ├── bronze/     # Staging views
-│       ├── silver/     # Condition flags, vitals, encounters
-│       └── gold/       # fct_patient_risk_features (ML-ready)
-├── models/             # PyTorch autoencoder + XGBoost (Layer 3)
+│       ├── bronze/     # stg_transactions — staging view
+│       ├── silver/     # int_transaction_features — amount/time feature engineering
+│       └── gold/       # fct_fraud_features (ML-ready mart)
+├── models/             # PyTorch autoencoder + XGBoost champion/challenger (Layer 3)
 ├── api/                # FastAPI scoring endpoint (Layer 4)
-├── agents/             # LangChain clinical agent (Layer 5)
-├── docker/             # Dockerfile + compose
+├── agents/              # LangChain fraud agent (Layer 6)
+├── docker/              # Dockerfile + compose
 ├── k8s/                # Minikube deployment manifests
 ├── tests/              # Unit + integration tests
-└── scripts/            # Pipeline runner
+├── scripts/             # Pipeline runner
+└── streamlit_app.py    # Dashboard (Layer 5)
 ```
 
 ## Layers (build order)
 
 | Layer | Status | Description |
 |-------|--------|-------------|
-| 1. Ingestion | ✅ Complete | FHIR R4 parser → DuckDB bronze |
-| 2. Transform | ✅ Complete | dbt silver/gold feature mart |
-| 3. Models | 🔲 Next | PyTorch autoencoder + XGBoost champion/challenger |
-| 4. API | 🔲 | FastAPI scoring endpoint + SHAP |
-| 5. Infra | 🔲 | Docker + Kubernetes (Minikube) |
-| 6. Agent | 🔲 | LangChain clinical agent |
+| 1. Ingestion | ✅ Complete | Real 284,807-row transaction CSV → DuckDB bronze |
+| 2. Transform | ✅ Complete | dbt silver/gold fraud feature mart |
+| 3. Models | ✅ Complete | PyTorch autoencoder + XGBoost champion/challenger, trained on real fraud labels |
+| 4. API | ✅ Complete | FastAPI scoring endpoint + SHAP explainability |
+| 5. Dashboard | ✅ Complete | Streamlit + Plotly transaction scoring UI |
+| 6. Agent | ✅ Complete | LangChain agent with ChromaDB fraud-case retrieval |
+| 7. Infra | ✅ Complete | Docker + Kubernetes (Minikube) |
+
+## Models
+
+- **XGBoost** — supervised classifier trained directly on the real `Class` fraud labels. CV AUC ≈ 0.98, ROC-AUC ≈ 1.00 on the full training set.
+- **Autoencoder** — unsupervised reconstruction-error anomaly detector (flags the top 5% by error), trained without labels; evaluated against the real fraud labels for comparison (AUC ≈ 0.93).
+- **Champion/challenger** — the two models are compared on AUC/F1 against ground-truth fraud labels; the current champion is tracked in `models/model_registry.json` and served by the API.
+
+## Links
+- [Live API Docs](http://localhost:8000/docs)
