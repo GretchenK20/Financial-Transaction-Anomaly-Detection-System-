@@ -4,6 +4,8 @@ Production fraud-detection AI pipeline: real credit card transaction data → db
 
 Built on the ULB Machine Learning Group's **Credit Card Fraud Detection** dataset (Kaggle: `mlg-ulb/creditcardfraud`) — 284,807 real European card transactions from September 2013, with a 0.17% fraud rate (492 confirmed frauds).
 
+** LIVE DEMO: https://jpbxjujh7jaydskfh8g6sf.streamlit.app/
+
 ## Setup
 
 ```bash
