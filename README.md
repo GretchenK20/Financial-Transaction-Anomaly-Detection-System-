@@ -11,10 +11,6 @@ pinned: false
 
 # Financial Transaction Anomaly Detection System
 
-> The YAML block above configures this repo as a [Hugging Face Space](https://huggingface.co/spaces)
-> (Docker SDK) serving `api/main.py`. It's inert everywhere else (GitHub, local
-> checkouts) — safe to ignore if you're not deploying there.
-
 Production fraud-detection AI pipeline: real credit card transaction data → dbt medallion → PyTorch autoencoder / XGBoost champion-challenger → FastAPI + Docker + Kubernetes → LangChain agent → Streamlit dashboard.
 
 Built on the ULB Machine Learning Group's **Credit Card Fraud Detection** dataset (Kaggle: `mlg-ulb/creditcardfraud`) — 284,807 real European card transactions from September 2013, with a 0.17% fraud rate (492 confirmed frauds).
