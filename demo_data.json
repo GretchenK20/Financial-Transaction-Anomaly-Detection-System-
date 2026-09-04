@@ -1,0 +1,473 @@
+{
+  "generated_at": "2026-09-04T20:18:13.038530+00:00",
+  "source": "Real scored output from the trained autoencoder + XGBoost models, ULB creditcard.csv (284,807 transactions)",
+  "champion": {
+    "champion": "xgboost",
+    "history": [
+      {
+        "timestamp": "2026-09-04T19:51:18.102524",
+        "champion": "xgboost",
+        "metrics": {
+          "autoencoder": {
+            "f1": 0.0495,
+            "auc": 0.926
+          },
+          "xgboost": {
+            "f1": 0.8346,
+            "auc": 1.0
+          }
+        }
+      }
+    ]
+  },
+  "dataset_stats": {
+    "n_total": 284807,
+    "n_fraud": 492,
+    "fraud_rate_pct": 0.1727,
+    "n_flagged_by_autoencoder": 14241,
+    "flagged_rate_pct": 5.0,
+    "n_fraud_caught_by_autoencoder": 365
+  },
+  "reconstruction_error_histogram": {
+    "legitimate": {
+      "bin_edges": [
+        0.0119,
+        0.2546,
+        0.4973,
+        0.7401,
+        0.9828,
+        1.2256,
+        1.4683,
+        1.711,
+        1.9538,
+        2.1965,
+        2.4393,
+        2.682,
+        2.9248,
+        3.1675,
+        3.4102,
+        3.653,
+        3.8957,
+        4.1385,
+        4.3812,
+        4.6239,
+        4.8667,
+        5.1094,
+        5.3522,
+        5.5949,
+        5.8376,
+        6.0804,
+        6.3231,
+        6.5659,
+        6.8086,
+        7.0513,
+        7.2941
+      ],
+      "counts": [
+        190915,
+        62863,
+        18365,
+        6589,
+        2543,
+        1097,
+        632,
+        390,
+        214,
+        158,
+        100,
+        69,
+        61,
+        38,
+        28,
+        12,
+        11,
+        11,
+        10,
+        8,
+        6,
+        4,
+        8,
+        5,
+        2,
+        10,
+        5,
+        6,
+        5,
+        2
+      ]
+    },
+    "fraud": {
+      "bin_edges": [
+        0.0119,
+        0.2546,
+        0.4973,
+        0.7401,
+        0.9828,
+        1.2256,
+        1.4683,
+        1.711,
+        1.9538,
+        2.1965,
+        2.4393,
+        2.682,
+        2.9248,
+        3.1675,
+        3.4102,
+        3.653,
+        3.8957,
+        4.1385,
+        4.3812,
+        4.6239,
+        4.8667,
+        5.1094,
+        5.3522,
+        5.5949,
+        5.8376,
+        6.0804,
+        6.3231,
+        6.5659,
+        6.8086,
+        7.0513,
+        7.2941
+      ],
+      "counts": [
+        33,
+        59,
+        41,
+        35,
+        33,
+        23,
+        14,
+        8,
+        13,
+        7,
+        9,
+        10,
+        5,
+        6,
+        8,
+        6,
+        6,
+        1,
+        4,
+        1,
+        4,
+        3,
+        2,
+        3,
+        2,
+        4,
+        5,
+        2,
+        2,
+        6
+      ]
+    }
+  },
+  "transactions": {
+    "541": {
+      "transaction_id": 541,
+      "champion_model": "xgboost",
+      "risk_score": 0.9993,
+      "is_high_risk": true,
+      "risk_percentile": 98.0,
+      "ae_reconstruction_error": 0.7894,
+      "xgb_probability": 0.9993,
+      "top_risk_factors": [
+        {
+          "feature": "v14",
+          "shap_value": 4.4452,
+          "direction": "increases"
+        },
+        {
+          "feature": "v10",
+          "shap_value": 1.4174,
+          "direction": "increases"
+        },
+        {
+          "feature": "v12",
+          "shap_value": 1.3949,
+          "direction": "increases"
+        },
+        {
+          "feature": "v4",
+          "shap_value": 1.2664,
+          "direction": "increases"
+        },
+        {
+          "feature": "v17",
+          "shap_value": 0.8003,
+          "direction": "increases"
+        }
+      ],
+      "explanation": "Transaction 541 has high fraud risk (score: 0.999, 98.0th percentile). Primary driver: v14.",
+      "is_fraud": 1
+    },
+    "623": {
+      "transaction_id": 623,
+      "champion_model": "xgboost",
+      "risk_score": 0.9795,
+      "is_high_risk": true,
+      "risk_percentile": 97.9,
+      "ae_reconstruction_error": 0.4361,
+      "xgb_probability": 0.9795,
+      "top_risk_factors": [
+        {
+          "feature": "v4",
+          "shap_value": 1.8016,
+          "direction": "increases"
+        },
+        {
+          "feature": "v3",
+          "shap_value": 0.6632,
+          "direction": "increases"
+        },
+        {
+          "feature": "v21",
+          "shap_value": 0.5058,
+          "direction": "increases"
+        },
+        {
+          "feature": "v14",
+          "shap_value": 0.2915,
+          "direction": "increases"
+        },
+        {
+          "feature": "v16",
+          "shap_value": -0.2903,
+          "direction": "decreases"
+        }
+      ],
+      "explanation": "Transaction 623 has high fraud risk (score: 0.979, 97.9th percentile). Primary driver: v4.",
+      "is_fraud": 1
+    },
+    "4920": {
+      "transaction_id": 4920,
+      "champion_model": "xgboost",
+      "risk_score": 0.9958,
+      "is_high_risk": true,
+      "risk_percentile": 98.0,
+      "ae_reconstruction_error": 0.7826,
+      "xgb_probability": 0.9958,
+      "top_risk_factors": [
+        {
+          "feature": "v12",
+          "shap_value": 1.983,
+          "direction": "increases"
+        },
+        {
+          "feature": "v4",
+          "shap_value": 1.4561,
+          "direction": "increases"
+        },
+        {
+          "feature": "v10",
+          "shap_value": 1.0086,
+          "direction": "increases"
+        },
+        {
+          "feature": "v16",
+          "shap_value": 0.9148,
+          "direction": "increases"
+        },
+        {
+          "feature": "v17",
+          "shap_value": 0.8457,
+          "direction": "increases"
+        }
+      ],
+      "explanation": "Transaction 4920 has high fraud risk (score: 0.996, 98.0th percentile). Primary driver: v12.",
+      "is_fraud": 1
+    },
+    "6108": {
+      "transaction_id": 6108,
+      "champion_model": "xgboost",
+      "risk_score": 0.9998,
+      "is_high_risk": true,
+      "risk_percentile": 98.0,
+      "ae_reconstruction_error": 3.9145,
+      "xgb_probability": 0.9998,
+      "top_risk_factors": [
+        {
+          "feature": "v14",
+          "shap_value": 4.1519,
+          "direction": "increases"
+        },
+        {
+          "feature": "v12",
+          "shap_value": 1.4423,
+          "direction": "increases"
+        },
+        {
+          "feature": "v10",
+          "shap_value": 1.4252,
+          "direction": "increases"
+        },
+        {
+          "feature": "v4",
+          "shap_value": 1.0754,
+          "direction": "increases"
+        },
+        {
+          "feature": "v16",
+          "shap_value": 0.9477,
+          "direction": "increases"
+        }
+      ],
+      "explanation": "Transaction 6108 has high fraud risk (score: 1.000, 98.0th percentile). Primary driver: v14.",
+      "is_fraud": 1
+    },
+    "0": {
+      "transaction_id": 0,
+      "champion_model": "xgboost",
+      "risk_score": 0.0021,
+      "is_high_risk": false,
+      "risk_percentile": 0.0,
+      "ae_reconstruction_error": 0.1529,
+      "xgb_probability": 0.0021,
+      "top_risk_factors": [
+        {
+          "feature": "v14",
+          "shap_value": -1.5799,
+          "direction": "decreases"
+        },
+        {
+          "feature": "v3",
+          "shap_value": -1.5023,
+          "direction": "decreases"
+        },
+        {
+          "feature": "v10",
+          "shap_value": -0.5307,
+          "direction": "decreases"
+        },
+        {
+          "feature": "hour_of_day",
+          "shap_value": -0.4681,
+          "direction": "decreases"
+        },
+        {
+          "feature": "v24",
+          "shap_value": -0.4239,
+          "direction": "decreases"
+        }
+      ],
+      "explanation": "Transaction 0 has low fraud risk (score: 0.002, 0.0th percentile). Primary driver: v14.",
+      "is_fraud": 0
+    },
+    "1": {
+      "transaction_id": 1,
+      "champion_model": "xgboost",
+      "risk_score": 0.0084,
+      "is_high_risk": false,
+      "risk_percentile": 0.0,
+      "ae_reconstruction_error": 0.0628,
+      "xgb_probability": 0.0084,
+      "top_risk_factors": [
+        {
+          "feature": "v14",
+          "shap_value": -1.5749,
+          "direction": "decreases"
+        },
+        {
+          "feature": "v12",
+          "shap_value": -1.194,
+          "direction": "decreases"
+        },
+        {
+          "feature": "v4",
+          "shap_value": -0.4185,
+          "direction": "decreases"
+        },
+        {
+          "feature": "hour_of_day",
+          "shap_value": -0.4013,
+          "direction": "decreases"
+        },
+        {
+          "feature": "v21",
+          "shap_value": -0.3999,
+          "direction": "decreases"
+        }
+      ],
+      "explanation": "Transaction 1 has low fraud risk (score: 0.008, 0.0th percentile). Primary driver: v14.",
+      "is_fraud": 0
+    },
+    "2": {
+      "transaction_id": 2,
+      "champion_model": "xgboost",
+      "risk_score": 0.0011,
+      "is_high_risk": false,
+      "risk_percentile": 0.0,
+      "ae_reconstruction_error": 0.7739,
+      "xgb_probability": 0.0011,
+      "top_risk_factors": [
+        {
+          "feature": "v14",
+          "shap_value": -1.5727,
+          "direction": "decreases"
+        },
+        {
+          "feature": "v12",
+          "shap_value": -1.1803,
+          "direction": "decreases"
+        },
+        {
+          "feature": "v3",
+          "shap_value": -1.0122,
+          "direction": "decreases"
+        },
+        {
+          "feature": "v10",
+          "shap_value": -0.5799,
+          "direction": "decreases"
+        },
+        {
+          "feature": "hour_of_day",
+          "shap_value": -0.5149,
+          "direction": "decreases"
+        }
+      ],
+      "explanation": "Transaction 2 has low fraud risk (score: 0.001, 0.0th percentile). Primary driver: v14.",
+      "is_fraud": 0
+    },
+    "3": {
+      "transaction_id": 3,
+      "champion_model": "xgboost",
+      "risk_score": 0.0,
+      "is_high_risk": false,
+      "risk_percentile": 0.0,
+      "ae_reconstruction_error": 0.2588,
+      "xgb_probability": 0.0,
+      "top_risk_factors": [
+        {
+          "feature": "v4",
+          "shap_value": -2.1697,
+          "direction": "decreases"
+        },
+        {
+          "feature": "v14",
+          "shap_value": -1.5241,
+          "direction": "decreases"
+        },
+        {
+          "feature": "v24",
+          "shap_value": -1.055,
+          "direction": "decreases"
+        },
+        {
+          "feature": "v3",
+          "shap_value": -0.8862,
+          "direction": "decreases"
+        },
+        {
+          "feature": "v8",
+          "shap_value": -0.8431,
+          "direction": "decreases"
+        }
+      ],
+      "explanation": "Transaction 3 has low fraud risk (score: 0.000, 0.0th percentile). Primary driver: v4.",
+      "is_fraud": 0
+    }
+  }
+}
