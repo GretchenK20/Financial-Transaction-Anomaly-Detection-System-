@@ -9,9 +9,14 @@ Built on the ULB Machine Learning Group's **Credit Card Fraud Detection** datase
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-full.txt   # full pipeline: ingestion, dbt, models, API, agent
 cp .env.example .env
 ```
+
+`requirements.txt` (repo root) is intentionally a separate, slim file — it's what
+[Streamlit Community Cloud](https://streamlit.io/cloud) reads to build `streamlit_app.py`'s
+environment, and deliberately excludes PyTorch/XGBoost/DuckDB/MLflow. If you only want to
+run the dashboard (in demo mode, no local API needed): `pip install -r requirements.txt`.
 
 ## Data
 

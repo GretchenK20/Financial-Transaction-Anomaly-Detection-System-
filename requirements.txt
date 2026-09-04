@@ -1,5 +1,9 @@
-streamlit>=1.63.0
-plotly>=7.0.0
-requests>=2.31.0
-pandas>=2.0.0
+# Streamlit Community Cloud reads THIS file (repo-root requirements.txt) to
+# build streamlit_app.py's environment — keep it slim (no PyTorch/XGBoost/
+# DuckDB/MLflow) and version-bounded for reproducible installs.
+# For the full pipeline (ingestion/dbt/models/API/agent), see requirements-full.txt.
+streamlit>=1.63.0,<2.0.0
+plotly>=7.0.0,<8.0.0
+requests>=2.31.0,<3.0.0
+pandas>=2.0.0,<3.0.0
 numpy<2

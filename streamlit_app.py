@@ -5,7 +5,9 @@ and falls back to pre-computed results in demo_data.json otherwise (e.g.
 when deployed to Streamlit Community Cloud with no API to call).
 
 No PyTorch / XGBoost / DuckDB / MLflow imports here — this file must run
-with only requirements_streamlit.txt installed.
+with only the repo-root requirements.txt installed (what Streamlit
+Community Cloud actually reads; see requirements-full.txt for everything
+else).
 """
 import json
 import os

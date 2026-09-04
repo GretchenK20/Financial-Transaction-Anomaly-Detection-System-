@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install dependencies
-COPY requirements.txt .
+# Install dependencies (explicit list — not requirements.txt, which is the
+# slim Streamlit Community Cloud file at repo root; see requirements-full.txt)
 RUN pip install --no-cache-dir \
     fastapi \
     uvicorn \
